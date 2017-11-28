@@ -19,9 +19,7 @@ function scraper(data, column){
     data.find("td").each(function(i) {
         var list, listElement;
         if($(this).is(".first") === false){
-            //console.log("I was: " + i);
             offset++;
-            //console.log("I is now: " + i);
         }
         $(this).find("div > .scheduleShift").each(function(k){
             if($(this).find("div > form").length === 0){ return true; }
@@ -60,29 +58,14 @@ function scraper(data, column){
             }
             listElement = document.createElement("li");
             listElement.append($(this).find("p")[0]);
-            //listElement.innerHTML += "<br>";
             listElement.append($(this).find("div > form")[0]);
             list.appendChild(listElement);
-            //console.log(i + ":" + k);
         });
         bool = 0;
     });
 }
 
-//var siteIDs = ["28", "29", "25", "27", "30", "95"];
-//var siteNames = ["AlexG", "AlexU", "CACC", "CACC-DISP", "RSC", "RUAB"];
-/*var i;
-for(i = 0; i < siteIDs.length; i++){
-    columns[i] = document.createElement("th");
-    columns[i].append(siteNames[i]);
-    $.get(("https://zed.rutgers.edu/scheduling/open_shifts/" + siteIDs[i] + "/"), function (s_data) {
-        scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), columns[i]);
-    });
-    container.appendChild(columns[i]);
-}*/
-
 var column1 = document.createElement("th");
-//column1.append("AlexG");
 column1.innerHTML += "<BLOCKQUOTE>AlexG</BLOCKQUOTE>";
 $.get('https://zed.rutgers.edu/scheduling/open_shifts/28/', function (s_data) {
     scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column1);
