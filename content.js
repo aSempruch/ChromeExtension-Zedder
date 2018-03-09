@@ -1,57 +1,108 @@
 // ==UserScript==
 // @name         Zedder
-// @namespace    http://tampermonkey.net/
-// @version      2.0
 // @description  Display open shifts on scheduling page of Zed
 // @author       aSempruch
 // @match        https://zed.rutgers.edu/scheduling/
 // @grant        none
 // ==/UserScript==
 
-document.body.innerHTML += "&nbsp;&nbsp;&nbsp;&nbsp;Zedder - Open Shift Scanner by aSempruch";
+document.getElementsByClassName('row-fluid')[0].getElementsByClassName('col-md-12')[0].innerHTML += "<h4>Zedder</h4>";
 
+var weekNum = 1;
 var container = document.createElement("table");
-//container.style.background = "green";
+var date = new Date();
 var bool = 0;
+var empties = 0;
+var stat = document.createElement("p");
+var dateRange = document.createElement("p");
+var bt_nextWeek = document.createElement("a");
+var bt_reset = document.createElement("a");
+stat.innerHTML="&nbsp;&nbsp;&nbsp;&nbsp;Scanning <b>0%</b><br>";
 
-function scraper(data, column){
-    var offset = 0;
+bt_reset.innerHTML="Current Week";
+bt_reset.setAttribute("href", "https://zed.rutgers.edu/scheduling/");
+bt_reset.style = "padding-left: 10px;font-size: 90%";
+bt_nextWeek.innerHTML = "Next Period";
+bt_nextWeek.addEventListener("click", function() { 
+    if((scanned*2) >= (sites.length*weekNum)){
+        date = nextDays(7*weekNum);
+        drawDate(true);
+    }
+});
+bt_nextWeek.style="cursor: pointer;padding-left: 10px;";
+document.getElementsByClassName('row-fluid')[0].append(dateRange);
+
+//drawDate(false);
+
+function nextDays(n){
+    var newDate = new Date(date.getTime());
+    newDate.setDate(newDate.getDate()+n);
+    return newDate;
+}
+
+function drawDate(run){
+    var vnextWeek = nextDays(7*weekNum);
+    vnextWeek.setDate(vnextWeek.getDate()-1);
+    dateRange.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;Date: "
+        + (date.getMonth()+1) + "/" + date.getDate() + "/" + date.getFullYear() + " - " + (vnextWeek.getMonth()+1) + "/" + vnextWeek.getDate() + "/" + vnextWeek.getFullYear();
+    dateRange.appendChild(bt_nextWeek);
+    if(run){
+        dateRange.appendChild(bt_reset);
+        container.innerHTML="";
+        scanned=0;empties=0;
+        stat.innerHTML="&nbsp;&nbsp;&nbsp;&nbsp;Scanning <b>0%</b><br>";
+        ittWeeks(sites);
+    }
+}
+document.getElementsByClassName('row-fluid')[0].append(stat);
+
+function scraper(data, column, date){
+    var offset = 0, hasShift = false, cHasShift = true;
     data.find("td").each(function(i) {
         var list, listElement;
-        if($(this).is(".first") === false){
+        if($(this).is(".first") === false)
             offset++;
-        }
+        else
+            cHasShift = false;
         $(this).find("div > .scheduleShift").each(function(k){
             if($(this).find("div > form").length === 0){ return true; }
+            hasShift = true;
             if(bool === 0){
-                var day;
-                switch(i-offset){
-                    case 0:
-                        day = "Saturday";
-                        break;
-                    case 1:
-                        day = "Sunday";
-                        break;
-                    case 2:
-                        day = "Monday";
-                        break;
-                    case 3:
-                        day = "Tuesday";
-                        break;
-                    case 4:
-                        day = "Wednesday";
-                        break;
-                    case 5:
-                        day = "Thursday";
-                        break;
-                    case 6:
-                        day = "Friday";
-                        break;
-                    default:
-                        day = "error";
-                        break;
+                if(!cHasShift){
+                    cHasShift = true;
+                    var day;
+                    var t_date = new Date(date.getTime());
+                    t_date.setDate(t_date.getDate()+(i-offset));
+                    var s_date = (t_date.getMonth()+1)+"/"+(t_date.getDate());
+                    var day = t_date.getDay();
+                    switch(day){
+                        case 0:
+                            day = "Sunday "+s_date;
+                            break;
+                        case 1:
+                            day = "Monday "+s_date;
+                            break;
+                        case 2:
+                            day = "Tuesday "+s_date;
+                            break;
+                        case 3:
+                            day = "Wednesday "+s_date;
+                            break;
+                        case 4:
+                            day = "Thursday "+s_date;
+                            break;
+                        case 5:
+                            day = "Friday "+s_date;
+                            break;
+                        case 6:
+                            day = "Saturday "+s_date;
+                            break;
+                        default:
+                            day = "error";
+                            break;
+                    }
+                    column.innerHTML += "&nbsp;&nbsp;&nbsp;&nbsp;" + day.bold();
                 }
-                column.innerHTML += "&nbsp;&nbsp;&nbsp;&nbsp;" + day.bold();
                 list = document.createElement("ul");
                 column.append(list);
                 bool = 1;
@@ -63,162 +114,115 @@ function scraper(data, column){
         });
         bool = 0;
     });
+    return hasShift;
 }
 
-var options = new Array(4);
 
 chrome.storage.sync.get("arr", function(items) {
-    options[0] = items.arr[0];
-    options[1] = items.arr[1];
-    options[2] = items.arr[2];
-    options[3] = items.arr[3];
-    start();
+    var options = new Array(5);
+	try {
+		options[0] = items.arr[0];
+		options[1] = items.arr[1];
+		options[2] = items.arr[2];
+		options[3] = items.arr[3];
+		options[4] = items.arr[4];
+		chrome.storage.sync.get("weekNum", function(items) {
+			weekNum = items.weekNum;
+			drawDate(false);
+			console.log("Starting");
+			start(options);
+		});
+	}
+	catch(err){
+		stat.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<b>Please select a campus from the extension options page.</b> (Click on the beautiful <img src="+chrome.extension.getURL('icon16.png')+"> icon in the top right)<br>";
+		return;
+	}
   });
 
-function start(){
-    if(options[0]){//CACC
-        var column1 = document.createElement("th");
-        column1.innerHTML += "<BLOCKQUOTE>AlexG</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/28/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column1);
-        });
-        container.append(column1);
+var sites = [];
+function start(options){
+    if(options[0])//College Ave
+        sites.push(
+            "AlexG", "28",
+            "AlexU", "29",
+            "CACC", "25",
+            "CACC-DISP", "27",
+            "RSC", "30",
+            "RUAB", "95");
+    if(options[1])//Livingston
+        sites.push(
+            "Kilmer", "36",
+            "Plaza", "41",
+            "Tillet", "32",
+            "Tillet-DISP", "33");
+    if(options[2])//Busch
+        sites.push(
+            "ARC", "19",
+            "ARC-DISP", "20",
+            "BEST", "22",
+            "LSM", "24",
+            "RBHS", "80");
+    if(options[3])//Cook
+        sites.push(
+            "C4", "18",
+            "DCENT", "17",
+            "DLIB", "16",
+            "LOR", "13",
+            "LOR_DISP", "14");
+    if(options[4])//Help Desk
+        sites.push(
+            "L1 HD", "4",
+            "L2 App", "6",
+            "L2 App AS", "1",
+            "L2 Esc", "9",
+            "L2 LD", "46",
+            "L2 Help@", "93",
+            "L2 Kite+Key", "102",
+            "L2 Net", "8",
+            "L2 Net AS", "7",
+            "L3 Sup", "39",
+            "L1 CWS", "44");
+    if(sites.length > 0){
+        ittWeeks(sites);
+    }
+    else{
+        stat.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<b>Please select a campus from the extension options page. (Click on the beautiful blue \'Z\' icon in the top right)</b><br>";
+        bt_nextWeek.innerHTML="";
+    }
+}
 
-        var column2 = document.createElement("th");
-        column2.innerHTML += "<BLOCKQUOTE>AlexU</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/29/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column2);
-        });
-        container.append(column2);
+function ittWeeks(sites){
+    var t_weekNum;
+    for(t_weekNum = 0; t_weekNum < weekNum; t_weekNum++){
+            scan(0, sites, nextDays(7*t_weekNum));
+    }
+}
 
-        var column3 = document.createElement("th");
-        column3.innerHTML += "<BLOCKQUOTE>CACC</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/25/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column3);
+var scanned=0;
+function scan(counter, sites, date){
+    if(counter == sites.length){
+        document.getElementsByClassName('row-fluid')[0].append(container);
+        return;
+    }
+    var column = document.createElement("td");
+    column.style = "min-width: 180px";
+    //console.log("https://zed.rutgers.edu/scheduling/open_shifts/" + sites[counter+1] + "/?start_date="+date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate());
+    column.innerHTML += "<BLOCKQUOTE>" + sites[counter] + "</BLOCKQUOTE>";
+    
+    $.get("https://zed.rutgers.edu/scheduling/open_shifts/" + sites[counter+1] + "/?start_date="+date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate(), function (s_data) {
+            //console.log("couter: " + counter+" length: "+sites.length);
+            if(scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column, date))
+                container.append(column);
+            else
+                empties++;
+            scanned++;
+            //if(counter<sites.length-2 && stat.innerHTML!="")
+                stat.innerHTML= "&nbsp;&nbsp;&nbsp;&nbsp;Scanning <b>"+(Math.trunc(((scanned*2)/(sites.length*weekNum))*100))+"%</b>";
+            if(empties*2 == (sites.length*weekNum))
+                    stat.innerHTML += " - <b>No open shifts for this period</b>";
+            //else if(hasShift && scanned*2==sites.length)
+            //    stat.innerHTML="&nbsp;";
         });
-        container.append(column3);
-
-        var column4 = document.createElement("th");
-        column4.innerHTML += "<BLOCKQUOTE>CACC-DISP</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/27/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column4);
-        });
-        container.append(column4);
-
-        var column5 = document.createElement("th");
-        column5.innerHTML += "<BLOCKQUOTE>RSC</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/30/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column5);
-        });
-        container.append(column5);
-
-        var column6 = document.createElement("th");
-        column6.innerHTML += "<BLOCKQUOTE>RUAB</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/95/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column6);
-        });
-        container.append(column6);
-        }//CACC
-    if(options[1]){
-        var column7 = document.createElement("th");
-        column7.innerHTML += "<BLOCKQUOTE>Kilmer</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/36/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column7);
-        });
-        container.append(column7);
-
-        var column8 = document.createElement("th");
-        column8.innerHTML += "<BLOCKQUOTE>Plaza</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/41/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column8);
-        });
-        container.append(column8);
-
-        var column9 = document.createElement("th");
-        column9.innerHTML += "<BLOCKQUOTE>Tillet</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/32/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column9);
-        });
-        container.append(column9);
-
-        var column10 = document.createElement("th");
-        column10.innerHTML += "<BLOCKQUOTE>Tillet-DISP</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/33/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column10);
-        });
-        container.append(column10);
-        }//Livi
-    if(options[2]){//Busch
-        var column13 = document.createElement("th");
-        column13.innerHTML += "<BLOCKQUOTE>ARC</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/19/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column13);
-        });
-        container.append(column13);
-
-        var column14 = document.createElement("th");
-        column14.innerHTML += "<BLOCKQUOTE>ARC-DISP</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/20/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column14);
-        });
-        container.append(column14);
-
-        var column15 = document.createElement("th");
-        column15.innerHTML += "<BLOCKQUOTE>BEST</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/22/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column15);
-        });
-        container.append(column15);
-
-        var column16 = document.createElement("th");
-        column16.innerHTML += "<BLOCKQUOTE>LSM</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/24/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column16);
-        });
-        container.append(column16);
-
-        var column17 = document.createElement("th");
-        column17.innerHTML += "<BLOCKQUOTE>RBHS</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/80/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column17);
-        });
-        container.append(column17);
-        }//Busch
-    if(options[3]){//Cook
-        var column18 = document.createElement("th");
-        column18.innerHTML += "<BLOCKQUOTE>C4</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/18/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column18);
-        });
-        container.append(column18);
-
-        var column19 = document.createElement("th");
-        column19.innerHTML += "<BLOCKQUOTE>DCENT</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/17/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column19);
-        });
-        container.append(column19);
-
-        var column20 = document.createElement("th");
-        column20.innerHTML += "<BLOCKQUOTE>DLIB</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/16/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column20);
-        });
-        container.append(column20);
-
-        var column21 = document.createElement("th");
-        column21.innerHTML += "<BLOCKQUOTE>LOR</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/13/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column21);
-        });
-        container.append(column21);
-
-        var column22 = document.createElement("th");
-        column22.innerHTML += "<BLOCKQUOTE>LOR-DISP</BLOCKQUOTE>";
-        $.get('https://zed.rutgers.edu/scheduling/open_shifts/14/', function (s_data) {
-            scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column22);
-        });
-        container.append(column22);
-        }//Cook
-    document.body.append(container);   
+    
+    scan(counter+2, sites, date);
 }

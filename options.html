@@ -1,18 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head><title>Zedder</title></head>
-<body style="min-width: 150px;">
-    Select desired campuses:
-    <ul style="margin-left: -15px;">
-        <input style="margin: 5px 0;" type="checkbox" id="cacc"> College Ave <br>
-        <input style="margin: 5px 0;" type="checkbox" id="livi"> Livingston <br>
-        <input style="margin: 5px 0;" type="checkbox" id="busch"> Busch <br>
-        <input style="margin: 5px 0;" type="checkbox" id="cook"> Cook/Douglass
-    </ul>
+<style>
+    body{
+        min-width: 300px;
+    }
+    .weekButton{
+        cursor: pointer;
+        font-size: 25px;
+        color: darkgrey;
+        padding: 8px;
+    }
+    #weekNum{
+        font-size:20px;
+    }
+</style>
+<body>
+    <table>
+        <tbody><tr><td>
+            Select desired campuses:
+            <ul style="margin-left: -30px;">
+                <input style="margin: 5px 0;" type="checkbox" id="cacc"> College Ave <br>
+                <input style="margin: 5px 0;" type="checkbox" id="livi"> Livingston <br>
+                <input style="margin: 5px 0;" type="checkbox" id="busch"> Busch <br>
+                <input style="margin: 5px 0;" type="checkbox" id="cook"> Cook/Douglass<br>
+                <input style="margin: 5px 0;" type="checkbox" id="hd"> Help Desk
+            </ul>
+            </td>
+            <td>
+            <p style="margin-top: 0px;margin-bottom: -5px;">Number of weeks to scan:</p>
+            <div align="center">
+                <strong id="dec" class="weekButton">-</strong>
+                <strong id="weekNum">0</strong>
+                <strong id="inc" class="weekButton">+</strong>
+            </div>
+            </td>
+            </tr>
+            <tr><td>
+                    <a id="openScheduling" style="padding-left: 20px;cursor: pointer;" align="center">Go To Scheduling Page</a>
+                </td>
+                <td>
+                    <button id="save" style="float: right;">Save</button>
+                </td>
+            </tr></tbody>
+    </table>
     
-    <div id="status"></div>
-    <button id="save">Save</button>
-
     <script src="options.js"></script>
 </body>
 </html>
