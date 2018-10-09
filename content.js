@@ -6,7 +6,18 @@
 // @grant        none
 // ==/UserScript==
 
-document.getElementsByClassName('row-fluid')[0].getElementsByClassName('col-md-12')[0].innerHTML += "<h4>Zedder</h4>";
+try{
+	var userName = document.getElementsByClassName('user-info')[0].innerText.substring(6,12).replace(/\s+/, "");
+	var userText = "";
+	if(userName == "rb859")
+		userText = "Error: weird first name detected";
+	if(userName == "sk1683")
+		userText = "Error: too much Sarah detected";
+}
+catch(err){
+	console.log("minor error");
+}
+document.getElementsByClassName('row-fluid')[0].getElementsByClassName('col-md-12')[0].innerHTML += "<h4>Zedder</h4>" + userText;
 
 var weekNum = 1;
 var container = document.createElement("table");
@@ -17,13 +28,14 @@ var stat = document.createElement("p");
 var dateRange = document.createElement("p");
 var bt_nextWeek = document.createElement("a");
 var bt_reset = document.createElement("a");
+var hiddenShifts = [];
 stat.innerHTML="&nbsp;&nbsp;&nbsp;&nbsp;Scanning <b>0%</b><br>";
 
 bt_reset.innerHTML="Current Week";
 bt_reset.setAttribute("href", "https://zed.rutgers.edu/scheduling/");
 bt_reset.style = "padding-left: 10px;font-size: 90%";
 bt_nextWeek.innerHTML = "Next Period";
-bt_nextWeek.addEventListener("click", function() { 
+bt_nextWeek.addEventListener("click", function() {
     if((scanned*2) >= (sites.length*weekNum)){
         date = nextDays(7*weekNum);
         drawDate(true);
@@ -31,8 +43,6 @@ bt_nextWeek.addEventListener("click", function() {
 });
 bt_nextWeek.style="cursor: pointer;padding-left: 10px;";
 document.getElementsByClassName('row-fluid')[0].append(dateRange);
-
-//drawDate(false);
 
 function nextDays(n){
     var newDate = new Date(date.getTime());
@@ -56,6 +66,14 @@ function drawDate(run){
 }
 document.getElementsByClassName('row-fluid')[0].append(stat);
 
+function sync_hidden(){
+  chrome.storage.sync.set({
+    hidden: hiddenShifts,
+  }, function() {
+    return;
+  });
+}
+
 function scraper(data, column, date){
     var offset = 0, hasShift = false, cHasShift = true;
     data.find("td").each(function(i) {
@@ -66,6 +84,7 @@ function scraper(data, column, date){
             cHasShift = false;
         $(this).find("div > .scheduleShift").each(function(k){
             if($(this).find("div > form").length === 0){ return true; }
+						if($.inArray(this.id, hiddenShifts) >= 0){ return true; }
             hasShift = true;
             if(bool === 0){
                 if(!cHasShift){
@@ -108,7 +127,21 @@ function scraper(data, column, date){
                 bool = 1;
             }
             listElement = document.createElement("li");
-            listElement.append($(this).find("p")[0]);
+            var shiftId = document.createElement("input");
+            shiftId.setAttribute("type", "hidden");
+            shiftId.setAttribute("name", "shiftId");
+            shiftId.setAttribute("value", this.id);
+            var shiftTime = $(this).find("p")[0];
+
+            try{
+                listElement.append(shiftTime);
+            }
+            catch(err){
+                listElement.append(document.createTextNode("Undefined Time"));
+            }
+
+            listElement.append(shiftId);
+
             listElement.append($(this).find("div > form")[0]);
             list.appendChild(listElement);
         });
@@ -130,7 +163,12 @@ chrome.storage.sync.get("arr", function(items) {
 			weekNum = items.weekNum;
 			drawDate(false);
 			console.log("Starting");
-			start(options);
+			chrome.storage.sync.get("hidden", function(items) {
+				hiddenShifts = items.hidden;
+				if(hiddenShifts == null)
+					hiddenShifts = [];
+				start(options);
+			});
 		});
 	}
 	catch(err){
@@ -208,7 +246,7 @@ function scan(counter, sites, date){
     column.style = "min-width: 180px";
     //console.log("https://zed.rutgers.edu/scheduling/open_shifts/" + sites[counter+1] + "/?start_date="+date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate());
     column.innerHTML += "<BLOCKQUOTE>" + sites[counter] + "</BLOCKQUOTE>";
-    
+
     $.get("https://zed.rutgers.edu/scheduling/open_shifts/" + sites[counter+1] + "/?start_date="+date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate(), function (s_data) {
             //console.log("couter: " + counter+" length: "+sites.length);
             if(scraper($(s_data).find(".table-responsive > .schedule > table > tbody > tr"), column, date))
@@ -223,6 +261,6 @@ function scan(counter, sites, date){
             //else if(hasShift && scanned*2==sites.length)
             //    stat.innerHTML="&nbsp;";
         });
-    
+
     scan(counter+2, sites, date);
 }
