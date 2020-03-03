@@ -9,6 +9,7 @@
 try{
 	var userName = document.getElementsByClassName('user-info')[0].innerText.substring(6,12).replace(/\s+/, "");
 	var userText = "";
+	//console.log(userName);
 	if(userName == "rb859")
 		userText = "Error: weird first name detected";
 	if(userName == "sk1683")
@@ -28,7 +29,7 @@ var stat = document.createElement("p");
 var dateRange = document.createElement("p");
 var bt_nextWeek = document.createElement("a");
 var bt_reset = document.createElement("a");
-var hiddenShifts = [];
+// var hiddenShifts = [];
 stat.innerHTML="&nbsp;&nbsp;&nbsp;&nbsp;Scanning <b>0%</b><br>";
 
 bt_reset.innerHTML="Current Week";
@@ -66,13 +67,13 @@ function drawDate(run){
 }
 document.getElementsByClassName('row-fluid')[0].append(stat);
 
-function sync_hidden(){
-  chrome.storage.sync.set({
-    hidden: hiddenShifts,
-  }, function() {
-    return;
-  });
-}
+// function sync_hidden(){
+//   chrome.storage.sync.set({
+//     hidden: hiddenShifts,
+//   }, function() {
+//     return;
+//   });
+// }
 
 function scraper(data, column, date){
     var offset = 0, hasShift = false, cHasShift = true;
@@ -84,7 +85,7 @@ function scraper(data, column, date){
             cHasShift = false;
         $(this).find("div > .scheduleShift").each(function(k){
             if($(this).find("div > form").length === 0){ return true; }
-						if($.inArray(this.id, hiddenShifts) >= 0){ return true; }
+						// if($.inArray(this.id, hiddenShifts) >= 0){ return true; }
             hasShift = true;
             if(bool === 0){
                 if(!cHasShift){
@@ -127,20 +128,43 @@ function scraper(data, column, date){
                 bool = 1;
             }
             listElement = document.createElement("li");
-            var shiftId = document.createElement("input");
-            shiftId.setAttribute("type", "hidden");
-            shiftId.setAttribute("name", "shiftId");
-            shiftId.setAttribute("value", this.id);
-            var shiftTime = $(this).find("p")[0];
+						var shiftId = document.createElement("input");
+						shiftId.setAttribute("type", "hidden");
+						shiftId.setAttribute("name", "shiftId");
+						shiftId.setAttribute("value", this.id);
+						var shiftTime = $(this).find("p")[0];
 
-            try{
-                listElement.append(shiftTime);
-            }
-            catch(err){
-                listElement.append(document.createTextNode("Undefined Time"));
-            }
+						// var hideButton = document.createElement("a");
+						// hideButton.appendChild(document.createTextNode("X"));
+						// hideButton.style.padding = "0px 0px 0px 5px";
+						// hideButton.style.cursor = "pointer";
 
-            listElement.append(shiftId);
+						// hideButton.addEventListener('click', function(){
+						// 	console.log(shiftId.value);
+						// 	hiddenShifts.push(shiftId.value);
+						// 	sync_hidden();
+						// 	list.removeChild(listElement);
+						// });
+
+                        if(shiftTime) {
+                            listElement.append(shiftTime);
+                        }
+                        else {
+                            listElement.append(document.createTextNode("Unable to get time"));
+                        }
+
+						// try{
+						// 	//console.log(shiftTime.innerHTML);
+						// 	//shiftTime.append(hideButton);
+						// 	listElement.append(shiftTime);
+						// }
+						// catch(err){
+						// 	//listElement.append(shiftTime);
+						// 	listElement.append(document.createTextNode("Missing Time"));
+						// 	//listElement.append(hideButton);
+						// }
+
+						listElement.append(shiftId);
 
             listElement.append($(this).find("div > form")[0]);
             list.appendChild(listElement);
@@ -154,77 +178,104 @@ function scraper(data, column, date){
 chrome.storage.sync.get("arr", function(items) {
     var options = new Array(5);
 	try {
-		options[0] = items.arr[0];
-		options[1] = items.arr[1];
-		options[2] = items.arr[2];
-		options[3] = items.arr[3];
-		options[4] = items.arr[4];
+        options = items.arr;
+        if(!options) { throw "Empty Options"; }
 		chrome.storage.sync.get("weekNum", function(items) {
 			weekNum = items.weekNum;
-			drawDate(false);
-			console.log("Starting");
-			chrome.storage.sync.get("hidden", function(items) {
-				hiddenShifts = items.hidden;
-				if(hiddenShifts == null)
-					hiddenShifts = [];
-				start(options);
-			});
+            drawDate(false);
+            start(options);
+			// chrome.storage.sync.get("hidden", function(items) {
+			// 	hiddenShifts = items.hidden;
+			// 	if(hiddenShifts == null)
+			// 		hiddenShifts = [];
+			// 	start(options);
+			// });
 		});
 	}
 	catch(err){
-		stat.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<b>Please select a campus from the extension options page.</b> (Click on the beautiful <img src="+chrome.extension.getURL('icon16.png')+"> icon in the top right)<br>";
+		stat.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<b>Please select a campus from the extension options page.</b> (Click on the <img src="+chrome.extension.getURL('icon16.png')+"> icon in the top right, select campus, and hit \"Save\")<br>";
 		return;
 	}
   });
 
 var sites = [];
 function start(options){
-    if(options[0])//College Ave
+    var supervisor = options[5];
+    if(options[0]) { //College Ave
         sites.push(
-            "AlexG", "28",
-            "AlexU", "29",
-            "CACC", "25",
-            "CACC-DISP", "27",
+            "AlexG", "121",
+            "AlexU", "122",
+            "CACC", "124",
+            "CACC-DISP", "125",
+            "CASC", "127",
             "RSC", "30",
-            "RUAB", "95");
-    if(options[1])//Livingston
+            "RH", "123"
+        );
+        if(supervisor)
+            sites.push(
+                "CACC-Sups", "126"
+            );
+    }
+    
+    if(options[1]) { //Livingston
         sites.push(
-            "Kilmer", "36",
-            "Plaza", "41",
-            "Tillet", "32",
-            "Tillet-DISP", "33");
-    if(options[2])//Busch
+            "CARR", "112",
+            "Plaza", "142",
+            "Tillet", "139",
+            "Tillet-DISP", "141"
+        );
+        if(supervisor)
+            sites.push(
+                "TIL-Sups", "140"
+            );
+    }
+    if(options[2]) { //Busch
         sites.push(
-            "ARC", "19",
-            "ARC-DISP", "20",
-            "BEST", "22",
-            "LSM", "24",
-            "RBHS", "80");
-    if(options[3])//Cook
+            "ARC", "115",
+            "ARC-DISP", "119",
+            "BEST", "113",
+            "KES", "118",
+            "LSM", "117"
+        );
+        if(supervisor)
+            sites.push(
+                "ARC-Sups", "116"
+            );
+    }
+    if(options[3]) { //Cook
         sites.push(
-            "C4", "18",
-            "DCENT", "17",
-            "DLIB", "16",
-            "LOR", "13",
-            "LOR_DISP", "14");
-    if(options[4])//Help Desk
+            "C4", "152",
+            "CHANG", "151",
+            "DCENT", "156",
+            "DLIB", "157",
+            "LOR", "153",
+            "LOR_DISP", "155"
+        );
+    }
+    if(options[4]) { //Help Desk
         sites.push(
-            "L1 HD", "4",
-            "L2 App", "6",
-            "L2 App AS", "1",
-            "L2 Esc", "9",
-            "L2 LD", "46",
-            "L2 Help@", "93",
-            "L2 Kite+Key", "102",
-            "L2 Net", "8",
-            "L2 Net AS", "7",
-            "L3 Sup", "39",
-            "L1 CWS", "44");
+            "L1", "132",
+            "L1 CT", "134",
+            "L2", "133",
+            "L2 App", "135",
+            "L2 Email", "138",
+            "L2 Esc", "137",
+            "L2 Net", "144"
+        );
+        if(supervisor)
+            sites.push(
+                "Assistant Sup", "147",
+                "ES Sup", "148",
+                "L2 App Sup", "136",
+                "L2 Net Sup", "145",
+                "L3 Sup", "149"
+            );
+    }
     if(sites.length > 0){
         ittWeeks(sites);
     }
     else{
-        stat.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<b>Please select a campus from the extension options page. (Click on the beautiful blue \'Z\' icon in the top right)</b><br>";
+        stat.innerHTML = "&nbsp;&nbsp;&nbsp;&nbsp;<b>Please select a campus from the extension options page.</b><br>";
         bt_nextWeek.innerHTML="";
     }
 }

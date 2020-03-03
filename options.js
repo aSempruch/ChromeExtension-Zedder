@@ -6,6 +6,7 @@ function save_options(openScheduling) {
       document.getElementById("busch").checked,
       document.getElementById("cook").checked,
       document.getElementById("hd").checked,
+      document.getElementById("supervisor").checked
   ];
   chrome.storage.sync.set({
     arr: el,
@@ -30,6 +31,7 @@ function restore_options() {
     document.getElementById("busch").checked = items.arr[2];
     document.getElementById("cook").checked = items.arr[3];
     document.getElementById("hd").checked = items.arr[4];
+    document.getElementById("supervisor").checked = items.arr[5];
   });
   chrome.storage.sync.get("weekNum", function(num){
     if(num.weekNum != null){
@@ -37,7 +39,7 @@ function restore_options() {
         weekNum = num.weekNum;
     }
     else
-        document.getElementById("weekNum").innerHTML = weekNum;  
+        document.getElementById("weekNum").innerHTML = weekNum;
   });
 }
 document.addEventListener('DOMContentLoaded', restore_options);
@@ -54,3 +56,10 @@ document.getElementById('dec').addEventListener('click', function(){
         weekNum--;
     document.getElementById("weekNum").innerHTML = weekNum;
 });
+// document.getElementById('resetHidden').addEventListener('click', function(){
+//   chrome.storage.sync.set({
+//     hidden: [],
+//   }, function() {
+//     return;
+//   });
+// });

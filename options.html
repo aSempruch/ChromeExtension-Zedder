@@ -3,7 +3,7 @@
 <head><title>Zedder</title></head>
 <style>
     body{
-        min-width: 300px;
+        min-width: 180px;
     }
     .weekButton{
         cursor: pointer;
@@ -11,40 +11,62 @@
         color: darkgrey;
         padding: 8px;
     }
+    .specialOption {
+        padding: 5px 0 0 0;
+        color:#566573;
+    }
+    .link {
+        padding: 0 10px 6px 0px;
+        cursor: pointer;
+    }
+    #campusSelect li {
+        margin: 0 0 4px 0;
+        list-style-type: none;
+    }
+    #weekControls {
+        margin: 0 auto 10px auto;
+        text-align: center;
+    }
     #weekNum{
         font-size:20px;
     }
+    #save {
+        margin: 14px 0 10px 5px;
+        float: right;
+    }
 </style>
 <body>
-    <table>
-        <tbody><tr><td>
-            Select desired campuses:
-            <ul style="margin-left: -30px;">
-                <input style="margin: 5px 0;" type="checkbox" id="cacc"> College Ave <br>
-                <input style="margin: 5px 0;" type="checkbox" id="livi"> Livingston <br>
-                <input style="margin: 5px 0;" type="checkbox" id="busch"> Busch <br>
-                <input style="margin: 5px 0;" type="checkbox" id="cook"> Cook/Douglass<br>
-                <input style="margin: 5px 0;" type="checkbox" id="hd"> Help Desk
-            </ul>
-            </td>
-            <td>
-            <p style="margin-top: 0px;margin-bottom: -5px;">Number of weeks to scan:</p>
-            <div align="center">
-                <strong id="dec" class="weekButton">-</strong>
-                <strong id="weekNum">0</strong>
-                <strong id="inc" class="weekButton">+</strong>
-            </div>
-            </td>
+        <b>Select desired campuses:</b>
+        <ul style="margin-left: -30px;" id="campusSelect">
+            <li><input type="checkbox" id="cacc"> College Ave <br></li>
+            <li><input type="checkbox" id="livi"> Livingston <br></li>
+            <li><input type="checkbox" id="busch"> Busch <br></li>
+            <li><input type="checkbox" id="cook"> Cook/Douglass<br></li>
+            <li><input type="checkbox" id="hd"> Help Desk<br></li>
+            <li class="specialOption"><input type="checkbox" id="supervisor"> Supervisor</li>
+        </ul>
+
+        <p style="margin: 16px 0 0 0;"><b>Number of weeks to scan:</b></p>
+        <div id="weekControls">
+            <strong id="dec" class="weekButton">-</strong>
+            <strong id="weekNum">0</strong>
+            <strong id="inc" class="weekButton">+</strong>
+        </div>
+        <!-- <table style="width: 180;">
+            <tr>
+                <td> -->
+                    <a id="openScheduling" class="link">Scheduling Page</a> <br>
+                    <a class="link" href="https://chrome.google.com/webstore/detail/zedder/oclfiknhggkgkhibknacdlniepkggbal?hl=en" target="_blank">Leave a review</a> <br>
+                    <a class="link" href="https://github.com/aSempruch/" target="_blank">Github</a>
+                <!-- </td>
+                <td> -->
+                    <div style="float: right; width: 32px;">
+                    <button id="save">Save</button>
+                    </div>
+                <!-- </td>
             </tr>
-            <tr><td>
-                    <a id="openScheduling" style="padding-left: 20px;cursor: pointer;" align="center">Go To Scheduling Page</a>
-                </td>
-                <td>
-                    <button id="save" style="float: right;">Save</button>
-                </td>
-            </tr></tbody>
-    </table>
-    
+        </table> -->
+
     <script src="options.js"></script>
 </body>
 </html>
